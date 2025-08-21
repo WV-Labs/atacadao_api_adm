@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Visualizações - Sistema de Terminais</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico?v=1}"/>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/all.min.css}" rel="stylesheet">
+    <script th:src="@{/js/chart.js}"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container"><a class="navbar-brand" th:href="@{/home}"><i class="fas fa-desktop"></i> Sistema de
+        Terminais Atacadão</a>
+        <div class="navbar-nav ms-auto"><a class="nav-link" th:href="@{/logout}"><i class="fas fa-sign-out-alt"></i>
+            Sair</a></div>
+    </div>
+</nav>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4"><h2><i class="fas fa-chart-line"></i> Dashboard
+        de Visualizações</h2>            <a th:href="@{/home}" class="btn btn-secondary"> <i
+            class="fas fa-arrow-left"></i> Voltar </a></div>
+    <!-- Cards de estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div><h5 class="card-title">Hoje</h5>
+                            <h3 th:text="${visualizacoesHoje}">0</h3></div>
+                        <div class="align-self-center"><i class="fas fa-eye fa-2x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div><h5 class="card-title">Total</h5>
+                            <h3 th:text="${totalVisualizacoes}">0</h3></div>
+                        <div class="align-self-center"><i class="fas fa-chart-bar fa-2x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div><h5 class="card-title">Terminais</h5>
+                            <h3 th:text="${terminais.size()}">0</h3></div>
+                        <div class="align-self-center"><i class="fas fa-desktop fa-2x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div><h5 class="card-title">Produtos</h5>
+                            <h3 th:text="${produtos.size()}">0</h3></div>
+                        <div class="align-self-center"><i class="fas fa-box fa-2x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h5><i class="fas fa-chart-pie"></i> Visualizações por Terminal</h5></div>
+                <div class="card-body">
+                    <canvas id="terminalChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h5><i class="fas fa-chart-bar"></i> Produtos Mais Visualizados</h5></div>
+                <div class="card-body">
+                    <canvas id="produtoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tabela de visualizações recentes -->
+    <div class="card">
+        <div class="card-header"><h5><i class="fas fa-clock"></i> Visualizações Recentes</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Terminal</th>
+                        <th>Produto</th>
+                        <th>IP</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="vis : ${visualizacoes}" th:if="${visStat.index < 20}">
+                        <td th:text="${#temporals.format(vis.dataHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                        <td th:text="${vis.terminal?.nome ?: 'N/A'}"></td>
+                        <td th:text="${vis.produto?.nome ?: 'N/A'}"></td>
+                        <td th:text="${vis.ip}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(visualizacoes)}">
+                        <td colspan="4" class="text-center">Nenhuma visualização encontrada</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Configuração dos gráficos
+    document.addEventListener('DOMContentLoaded', function () {
+        // Gráfico de Terminais
+        const ctxTerminal = document.getElementById('terminalChart').getContext('2d');
+        new Chart(ctxTerminal, {
+            type: 'doughnut',
+            data: {
+                labels: [/*[[${terminais}]]*/].map(t => t.nome),
+                datasets: [{
+                    data: [/*[[${terminais}]]*/].map(() => Math.floor(Math.random() * 100) + 1),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF']
+                }]
+            },
+            options: {responsive: true, maintainAspectRatio: false}
+        });
+        // Gráfico de Produtos
+        const ctxProduto = document.getElementById('produtoChart').getContext('2d');
+        new Chart(ctxProduto, {
+            type: 'bar',
+            data: {
+                labels: [/*[[${produtos}]]*/].slice(0, 5).map(p => p.nome),
+                datasets: [{
+                    label: 'Visualizações',
+                    data: [/*[[${produtos}]]*/].slice(0, 5).map(() => Math.floor(Math.random() * 50) + 1),
+                    backgroundColor: '#36A2EB'
+                }]
+            },
+            options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true}}}
+        });
+    });
+</script>
+</body>
+</html>

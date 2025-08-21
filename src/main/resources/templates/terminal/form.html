@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit ? 'Editar Terminal' : 'Novo Terminal'} + ' - Sistema de Terminais'"></title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/all.min.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico?v=1}" />
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container"><a class="navbar-brand" th:href="@{/home}"><i class="fas fa-desktop"></i> Sistema de
+        Terminais Atacadão</a>
+        <div class="navbar-nav ms-auto"><a class="nav-link" th:href="@{/logout}"><i class="fas fa-sign-out-alt"></i>
+            Sair</a></div>
+    </div>
+</nav>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4"><h2><i class="fas fa-desktop text-success"></i> <span class="text-success"
+            th:text="${isEdit ? 'Editar Terminal' : 'Novo Terminal'}"></span></h2>            <a th:href="@{/terminais}"
+                                                                                                 class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar </a></div>
+    <div class="card">
+        <div class="card-body">
+            <!-- Mensagem de erro -->
+            <div th:if="${erro}" class="alert alert-danger" role="alert"
+                 th:utext="${#strings.replace(erro, '\n', '<br/>')}">
+            </div>
+            <!--<form th:action="@{/terminais/salvar}" th:object="${terminalRequest}" method="post" class="needs-validation"-->
+            <form th:action="@{/terminais/salvar}" th:object="${terminalRequest}" method="post" class="needs-validation"
+                  novalidate id="frmTerminal">
+                <input th:if="${isEdit}" type="hidden" th:field="*{id}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome *</label>
+                            <input type="text"
+                                 class="form-control"
+                                 th:field="*{nome}"
+                                 th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''"
+                                 placeholder="Ex: Terminal Açougue Leste"
+                                 required
+                                 maxlength="100">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}"
+                                 th:errors="*{nome}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="localizacao" class="form-label">Localização *</label> <input
+                                type="text" class="form-control" th:field="*{localizacao}"
+                                th:classappend="${#fields.hasErrors('localizacao')} ? 'is-invalid' : ''"
+                                placeholder="Ex: Área Leste, Setor Norte" required maxlength="100">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('localizacao')}"
+                                 th:errors="*{localizacao}"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-group">
+                                <label for="categoria" class="form-label">Setor</label><br>
+                                <select class="custom-select" id="categoria-select"
+                                        th:field="*{categoria}">
+                                    <option value="">Selecione um Setor</option>
+                                    <option
+                                            th:each="scategoriaobj : ${categorias}"
+                                            th:value="${scategoriaobj.id}"
+                                            th:text="${scategoriaobj.nome}">
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="nrTerminal" class="form-label">Número *</label>
+                            <input type="number" class="form-control"
+                                   th:field="*{nrTerminal}" th:classappend="${#fields.hasErrors('nrTerminal')} ? 'is-invalid' : ''"
+                                   min="1" max="3" required id="nrTerminal" th:size="2">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nrTerminal')}"
+                                 th:errors="*{nrTerminal}"></div>
+                            <div class="form-text">Este número será usado na URL: /categoria/nrTerminal</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" th:field="*{ativo}"
+                                                           id="ativo"> <label class="form-check-label" for="ativo">
+                                Terminal Ativo </label></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end"><a th:href="@{/terminais}"
+                                                                              class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="button" id="btn-salvar" class="btn btn-primary"><i class="fas fa-save"></i> <span
+                            th:text="${isEdit ? 'Atualizar' : 'Salvar'}"></span></button>
+                </div>
+                <!-- Preview da URL gerada -->
+                <div class="alert alert-info" id="url-preview" style="display: none;"><strong>URL que será
+                    gerada:</strong> <code id="url-text"></code>
+                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="copiarUrl()"><i
+                            class="fas fa-copy"></i> Copiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script>
+
+    // Script específico para preview da URL
+    function atualizarPreviewUrl() {
+        const categoriaSelect = document.getElementById('categoria-select');
+        const numeroInput = document.getElementById('nrTerminal');
+        const urlPreview = document.getElementById('url-preview');
+        const urlText = document.getElementById('url-text');
+        const categoriaText = categoriaSelect.options[categoriaSelect.selectedIndex]?.text;
+        const numero = numeroInput.value;
+        if (categoriaText && numero) {
+            const categoriaFormatada = categoriaText.toLowerCase().replace(/\s+/g, '');
+            const url = `localhost:8080/api-mercado/api/${categoriaFormatada}/${numero}`;
+            urlText.textContent = url;
+            urlPreview.style.display = 'block';
+        } else {
+            urlPreview.style.display = 'none';
+        }
+    }
+
+    function copiarUrl() {
+        const url = document.getElementById('url-text').textContent;
+        navigator.clipboard.writeText(url).then(() => {
+            mostrarAlertTemporario('URL copiada para a área de transferência!', 'success', 2000);
+        });
+    }
+
+    // Antes de submeter, coletar os selecionados e criar hidden inputs:
+    document.getElementById('btn-salvar').addEventListener('click', function () {
+        document.getElementById('frmTerminal').submit();
+        return true;
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('categoria-select').addEventListener('change', atualizarPreviewUrl);
+        document.getElementById('nrTerminal').addEventListener('input', atualizarPreviewUrl);
+        atualizarPreviewUrl(); // Executar na inicialização
+    });
+</script>
+</body>
+</html>
