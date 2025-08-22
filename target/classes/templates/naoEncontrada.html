@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404 - Página Não Encontrada</title>
+  <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico?v=1}" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .error-container {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .error-code {
+      font-size: 120px;
+      font-weight: bold;
+      color: #dc3545;
+    }
+    .error-message {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .btn-home {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<img src="404.svg" alt="Página não encontrada">
+<div class="container error-container">
+  <div class="error-code">404</div>
+  <div class="error-message">Ops! Página não encontrada.</div>
+  <p>A página que você está procurando pode ter sido removida, renomeada ou está temporariamente indisponível.</p>
+  <a href="/" class="btn btn-primary btn-home">Voltar para a Página Inicial</a>
+</div>
+
+</body>
+</html>

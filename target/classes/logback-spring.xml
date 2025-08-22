@@ -1,0 +1,45 @@
+<configuration>
+    <property name="LOG_DIR" value="logs"/>
+    <!-- Console log padrão -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/app.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/app.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Log específico para atualizações no banco -->
+    <appender name="DB_UPDATE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/db-updates.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/db-updates.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <root level="DEBUG">
+        <appender-ref ref="DB_UPDATE_FILE"/>
+    </root>
+
+    <root level="ERROR">
+        <appender-ref ref="DB_UPDATE_FILE"/>
+    </root>
+
+</configuration>

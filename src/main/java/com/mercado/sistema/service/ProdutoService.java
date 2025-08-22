@@ -1,6 +1,7 @@
 package com.mercado.sistema.service;
 
 import static com.mercado.sistema.general.Constants.TCTABELAPRECO;
+import static java.lang.Long.parseLong;
 
 import com.mercado.sistema.config.FileMonitorConfig;
 import com.mercado.sistema.dao.dto.ProdutoDTO;
@@ -93,7 +94,14 @@ public class ProdutoService {
 
   @CacheEvict(value = "produtosRemotos", allEntries = true)
   public Produto save(Produto produto) {
-    return produtoRepository.save(produto);
+      Produto save = produtoRepository.save(produto);
+      if(save.getCdTxtimport()==null){
+            save.setCdTxtimport(parseLong(String.valueOf(90000L+save.getId())));
+            produtoRepository.save(save);
+      }
+      log.info("Produto salvo com sucesso: " + save.getNome() + " (ID: " + save.getId() + ")");
+
+      return save;
   }
 
   @CacheEvict(value = "produtosRemotos", allEntries = true)

@@ -63,7 +63,7 @@ public class ProdutoApiController {
   @GetMapping(value = "/produtos-json-remoto/{categoria}/{numero}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PermitAll
   public ResponseEntity<List<ProdutoRemote>> getProdutosComoJson(@PathVariable String categoria, @PathVariable Integer numero) {
-    System.out.println("entrou no ADM - chamada da página");
+    System.out.println("entrou no ADM - chamada da página do html");
     return ResponseEntity.ok(produtoService.obterListaProdutoRemotoEspecifico(categoria, numero));
   }
 
