@@ -603,13 +603,23 @@
     btnRemoverArquivo.addEventListener('click', () => {
         if (confirm('Tem certeza que deseja remover este arquivo?')) {
             // Limpar campos e preview
-            nomeArquivoHidden.value = '';
-            fileInput.value = '';
-            fileInfo.style.display = 'none';
-            filePreview.innerHTML = '';
-            btnRemoverArquivo.style.display = 'none';
+            $.ajax({
+                url: '/api-mercado/upload/'+ nomeArquivoHidden.value,
+                method:  'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute("content")
+                },
 
-            console.log('Arquivo removido do formulário');
+            }).done(() => {
+                nomeArquivoHidden.value = '';
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                filePreview.innerHTML = '';
+                btnRemoverArquivo.style.display = 'none';
+                console.log('Arquivo removido do formulário');
+            })
+
         }
     });
 

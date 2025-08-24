@@ -1,8 +1,6 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
 ### STS ###
 .apt_generated
@@ -31,28 +29,6 @@ build/
 
 ### VS Code ###
 .vscode/
-!/logs/
-!/local-repo/
-!/.mvn/
-!/.idea/
-!/target/
-!/scripts/
-!/.idea/
-
-!/.mvn/
-
-!/local-repo/
-
-!/logs/
-
-!/out/
-!/BACKUP.MD
-
-!/ESTRUTURA_DISTRIBUICAO.MD
-
-!/HOW_TO_DO.md
-
-!/INSTALL-OFFLINE.MD
 /.idea/google-java-format.xml
 /.idea/misc.xml
 /.idea/jarRepositories.xml
@@ -64,6 +40,9 @@ build/
 /.idea/compiler.xml
 /BACKUP.MD
 /.idea/checkstyle-idea.xml
-!/logs/
-!/local-repo/
-!/.idea/
+/logs/
+/target/
+/.idea/
+/local-repo/
+/logs/
+!/target/

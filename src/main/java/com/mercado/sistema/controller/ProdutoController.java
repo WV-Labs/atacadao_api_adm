@@ -65,26 +65,24 @@ public class ProdutoController {
         return PRODUTO_FORM;
       }
 
-      if(produto.getId()!=null){
-        Optional<Produto> produto1 = produtoService.findById(produto.getId());
-        if(produto1.isPresent()){
-          if(produto.getCdTxtimport()==null){
-            produto.setCdTxtimport(produto1.get().getCdTxtimport());
-
-          }
-        }
-      }
-
-      if(produto.getCategoria().getId()==CAT_CONFEITARIA || produto.getCategoria().getId()==CAT_PADARIA){
+      if(produto.getCategoria().getId()== CAT_CAFETERIA || produto.getCategoria().getId()==CAT_PADARIA){
         produto.setImportado(false);
+        produto.setEstoque(1);
       }else{
         if(produto.getCategoria().getId()==CAT_SEMCADASTRO){
           produto.setImportado(true);
         }
       }
+    Produto save = produtoService.save(produto);
+
+    if(produto.getCdTxtimport()==null){
+      produto.setId(save.getId());
+      produto.setCdTxtimport(90000L+save.getId());
       produtoService.save(produto);
-      redirectAttributes.addFlashAttribute("sucess", "Produto salvo com sucesso!");
-      return REDIRECT_PRODUTOS;
+    }
+
+    redirectAttributes.addFlashAttribute("sucess", "Produto salvo com sucesso!");
+    return REDIRECT_PRODUTOS;
   }
 
   @GetMapping("/excluir/{id}")

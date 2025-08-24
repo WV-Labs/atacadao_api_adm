@@ -35,7 +35,7 @@ public class ProdutoService {
   public static final String ERRO_NA_TRANSACAO_ROLLBACK_SERÁ_EXECUTADO = "❌ Erro na transação - Rollback será executado: ";
   public static final int CAT_SEMCADASTRO = 16;
   public static final int CAT_PADARIA = 13;
-  public static final int CAT_CONFEITARIA = 14;
+  public static final int CAT_CAFETERIA = 14;
   private static final String SUCCESS = "success";
   private static final String MESSAGE = "message";
   public static final String PRODUTO = "produto";
@@ -241,10 +241,6 @@ public class ProdutoService {
                       .filter(p -> p.getId() == null || !idsTerminal.contains(p.getId()))
                       .toList();
 
-              System.out.println("Acessou e vai unir");
-              System.out.println(doTerminal.size());
-              System.out.println(daCategoriaSemDuplicar.size());
-
               // junta e ordena (true primeiro, depois nome)
               return Stream.concat(doTerminal.stream(), daCategoriaSemDuplicar.stream())
                       .sorted(Comparator
@@ -318,7 +314,7 @@ public class ProdutoService {
         operacao = "CRIADO";
       }
       prepararCamposComuns(produtoDTO, produto);
-      if (produto.getCategoria().getId() == CAT_PADARIA || produto.getCategoria().getId() == CAT_CONFEITARIA ) {
+      if (produto.getCategoria().getId() == CAT_PADARIA || produto.getCategoria().getId() == CAT_CAFETERIA) {
           produto.setImportado(false);
       }
 
