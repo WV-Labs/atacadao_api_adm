@@ -1,5 +1,9 @@
 package com.mercado.sistema.controller;
 
+import com.mercado.sistema.service.ConteudoService;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -10,17 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 @RequestMapping("")
 public class UploadProxyController {
 
     @Value("${api.tv.base.url:http://localhost:8081}")
     private String apiTvBaseUrl;
-
+    @Autowired
+    private ConteudoService conteudoService;
     @Autowired
     private RestTemplate restTemplate;
 
@@ -118,6 +119,26 @@ public class UploadProxyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+/*
+    @GetMapping("/excluirMidia/{id}")
+    public ResponseEntity<Map<String, Object>> excluirMidia(@PathVariable Long id) {
+        try {
+            // Buscar conteúdo para obter nome do arquivo
+            Conteudo conteudo = conteudoService.findConteudoById(id);
+
+            // Remover arquivo se existir
+            if (conteudo.getNomeMidia() != null && !conteudo.getNomeMidia().isEmpty()) {
+                try {
+                    return deletarArquivo(conteudo.getNomeMidia());
+                } catch (Exception ex) {
+                    System.err.println("Erro ao remover arquivo: " + ex.getMessage());                    
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }*/
 
     private boolean isValidFileType(String contentType) {
         if (contentType == null) return false;
