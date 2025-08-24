@@ -45,3 +45,4 @@ build/
 /.idea/
 /local-repo/
 /logs/
+!/target/

@@ -65,7 +65,7 @@ logging:
 
 file:
   monitor:
-    path_raiz: C:/Users/Junior/Documents/_Cliente_e_Consultorias/atacadao/importacao/input/output
+    path_raiz: C:/Users/USER/OneDrive/Desktop/importacao/input/output
     input-directorio: ${file.monitor.path_raiz}/jsonprodutos
     output-directorio: ${file.monitor.path_raiz}/gravadosAposCarga
     polling-interval: 5000  # milissegundos
