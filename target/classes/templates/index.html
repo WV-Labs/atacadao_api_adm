@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produtos</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico?v=1}" />
+    <script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+    <link th:href="@{/css/tailwind.min.css}" rel="stylesheet">
+    <link th:href="@{/css/all.min.css}" rel="stylesheet">
+    <style>
+      body {
+        background-image: radial-gradient(circle at center, #f5992f 40%, #ee6417);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+
+    <!-- Logo -->
+    <div class="w-full pt-10 flex items-center">
+      <div class="flex justify-center items-center w-full">
+        <h1 class="text-6xl font-bold text-white">Tabela de Preços</h1>
+      </div>
+      <div class="flex justify-end">
+        <img
+          src="../static/img/logo-atacadao.png"
+          width="100"
+          height="100"
+          alt="logo"
+          class="bg-white p-2 rounded-l-xl"
+        />
+      </div>
+    </div>
+
+    
+
+    <!-- Conteúdo -->
+    <div class="w-full flex flex-wrap lg:flex-nowrap gap-5 px-4 lg:px-20 mt-10">
+      <!-- Lista de Produtos -->
+      <div class="w-full ">
+        <div class="produtos max-h-[600px] bg-white rounded-2xl overflow-y-auto p-4" id="lista-produtos"></div>
+      </div>
+
+      
+    </div>
+
+    <script>
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      $(document).ready(function () {
+        $.getJSON("../produto.json", function (data) {
+          const produtos = data.produtos;
+          const categorias = data.categorias;
+          const slugCategoria = getQueryParam("categoria") || "mercearia";
+          const categoriaObj = categorias.find(c => c.slug === slugCategoria);
+
+          
+
+          let apenasComDesconto = false;
+          let produtoSelecionado = null;
+          let produtosFiltrados = [];
+          let indexAtual = 0;
+          let intervaloRotacao = null;
+
+          
+
+          function atualizarImagem(produto) {
+            const imagem = produto?.imagem ? `/${produto.imagem}` : "/img/Group 13.png";
+            $("#imagem-produto").fadeOut(300, function () {
+              $(this).attr("src", imagem).fadeIn(300);
+            });
+          }
+
+          function destacarProduto(index) {
+            $("#lista-produtos > div").removeClass("bg-orange-100/80");
+            $(`#lista-produtos > div[data-index="${index}"]`).addClass("bg-orange-100/80");
+          }
+
+          function iniciarRotacao() {
+            clearInterval(intervaloRotacao);
+            if (produtosFiltrados.length === 0) return;
+
+            indexAtual = 0;
+            atualizarImagem(produtosFiltrados[indexAtual]);
+            destacarProduto(indexAtual);
+
+            intervaloRotacao = setInterval(() => {
+              indexAtual = (indexAtual + 1) % produtosFiltrados.length;
+              produtoSelecionado = produtosFiltrados[indexAtual];
+              atualizarImagem(produtoSelecionado);
+              destacarProduto(indexAtual);
+            }, 10000); // 10 segundos
+          }
+
+          function renderProdutos() {
+            produtosFiltrados = produtos
+              .filter(p => p.categoria === categoriaObj.nome)
+              .filter(p => p.disponivel)
+              .filter(p => !apenasComDesconto || p.precoPromocao > 0);
+
+            $("#lista-produtos").empty();
+
+            if (produtosFiltrados.length === 0) {
+              $("#lista-produtos").append(`<p class="text-center text-gray-500">Nenhum produto encontrado.</p>`);
+              $("#imagem-produto").attr("src", "/img/Group 13.png");
+              clearInterval(intervaloRotacao);
+              return;
+            }
+
+            produtosFiltrados.forEach((produto, index) => {
+              const precoHtml =
+                produto.precoPromocao > 0
+                  ? `
+                    <p class="font-bold text-sm">De: <s>R$ ${produto.preco.toFixed(2)}</s></p>
+                    <p class="font-black text-xl text-orange-600">Por: R$ ${produto.precoPromocao.toFixed(2)}</p>
+                  `
+                  : `<p class="font-black text-xl text-orange-600">R$ ${produto.preco.toFixed(2)}</p>`;
+
+              $("#lista-produtos").append(`
+                <div class="rounded-xl text-sm flex justify-between px-2 py-4 cursor-pointer hover:bg-gray-100 border-b" data-index="${index}">
+                  <div>
+                    <h3 class="font-black text-lg text-orange-600">${produto.nome}</h3>
+                    <p class="text-gray-500 text-xs">${produto.descricao}</p>
+                  </div>
+                  <div class="flex items-end gap-4 text-right">${precoHtml}</div>
+                </div>
+              `);
+            });
+
+            produtoSelecionado = produtosFiltrados[0];
+            iniciarRotacao();
+          }
+
+          // Clique no produto
+          $(document).on("click", "#lista-produtos > div", function () {
+            const index = $(this).data("index");
+            produtoSelecionado = produtosFiltrados[index];
+            indexAtual = index;
+            atualizarImagem(produtoSelecionado);
+            destacarProduto(index);
+          });
+
+
+
+          // Carregar inicialmente
+          renderProdutos();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title th:text="${isEdit ? 'Editar Conteudo' : 'Novo Conteudo'} + ' - Sistema de Terminais'"></title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/all.min.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico?v=1}" />
+    <style>
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .file-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .preview-video {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 4px;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            display: none;
+        }
+        .upload-progress {
+            display: none;
+            margin-top: 10px;
+        }
+
+        /* Estilos para os botões de controle */
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bulk-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .bulk-buttons .btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            white-space: nowrap;
+        }
+
+        .individual-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .individual-buttons .btn {
+            font-size: 1.2rem;
+            padding: 0.5rem 0.75rem;
+            font-weight: bold;
+        }
+
+        .separator {
+            width: 100%;
+            height: 1px;
+            background-color: #dee2e6;
+            margin: 5px 0;
+        }
+
+        /* Debug styles */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/home}">
+            <i class="fas fa-desktop"></i> Sistema de Terminais Atacadão
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/logout}">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-info-circle text-info"></i> <span class="text-info" th:text="${isEdit ? 'Editar Conteudo' : 'Novo Conteudo'}"></span></h2>
+        <a th:href="@{/conteudos}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <!-- Mensagem de erro -->
+            <div th:if="${erro}" class="alert alert-danger" role="alert"
+                 th:utext="${#strings.replace(erro, '\n', '<br/>')}">
+            </div>
+
+            <form th:action="@{/conteudos/salvar}" th:object="${conteudoRequest}"
+                  method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+
+                <!-- Campo ID oculto para edição -->
+                <input th:if="${isEdit}" type="hidden" th:field="*{id}" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Nome *</label>
+                            <input type="text" class="form-control"
+                                   th:field="*{titulo}"
+                                   th:classappend="${#fields.hasErrors('titulo')} ? 'is-invalid' : ''"
+                                   placeholder="Ex: Picanha Estância 92" required maxlength="50">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('titulo')}"
+                                 th:errors="*{titulo}"></div>
+                            <div class="invalid-feedback" th:unless="${#fields.hasErrors('titulo')}">
+                                Nome é obrigatório
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição *</label>
+                    <textarea class="form-control" rows="2"
+                              th:field="*{descricao}"
+                              th:classappend="${#fields.hasErrors('descricao')} ? 'is-invalid' : ''"
+                              placeholder="Descrição detalhada do conteudo"
+                              maxlength="255"></textarea>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('descricao')}"
+                         th:errors="*{descricao}"></div>
+                    <div class="form-text">Máximo 100 caracteres</div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipoConteudo" class="form-label">Tipo Conteudo *</label>
+                            <select class="form-control" th:field="*{tipoConteudo}" id="tipoConteudo">
+                                <option value="3" selected="selected">Tabela de Produtos</option>
+                                <option value="2">Video</option>
+                                <option value="1">Foto</option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('tipoConteudo')}"
+                                 th:errors="*{tipoConteudo}"></div>
+                            <div class="invalid-feedback" th:unless="${#fields.hasErrors('tipoConteudo')}">
+                                Tipo é obrigatório
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="categoria" class="form-label">Setor</label>
+                            <select class="custom-select form-control" id="categoria" name="categoriaId">
+                                <option value="">Selecione um Setor</option>
+                                <option th:each="scategoriaobj : ${categorias}"
+                                        th:value="${scategoriaobj.id}"
+                                        th:text="${scategoriaobj.nomeExibicao}"
+                                        th:selected="${categoriaSelecionada != null} ? ${scategoriaobj.id} == ${categoriaSelecionada.id} : false">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload de Imagem e Vídeo -->
+                <div id="upload-midia" class="mt-3 d-none">
+                    <div class="mb-3">
+                        <label for="nomeMidia" class="form-label">Arquivo de Mídia</label>
+
+                        <!-- Campo hidden para armazenar o nome do arquivo -->
+                        <input type="hidden" th:field="*{nomeMidia}" id="nomeArquivoHidden">
+
+                        <!-- Input file para envio no form -->
+                        <input type="file" name="arquivoUpload" id="fileInput" accept="image/*,video/*" style="display: none;">
+
+                        <!-- Área de upload visual -->
+                        <div class="file-upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">Clique aqui ou arraste um arquivo</p>
+                            <p class="text-muted small">Imagens: JPG, PNG, GIF | Vídeos: MP4, MOV, AVI</p>
+                        </div>
+
+                        <!-- Barra de progresso -->
+                        <div class="upload-progress">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">Enviando arquivo...</small>
+                        </div>
+
+                        <!-- Informações do arquivo -->
+                        <div class="file-info" id="fileInfo">
+                            <i class="fas fa-file-alt"></i>
+                            <strong>Arquivo selecionado:</strong> <span id="fileName"></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="btnRemoverArquivo" style="display: none;">
+                                <i class="fas fa-trash"></i> Remover
+                            </button>
+                        </div>
+
+                        <!-- Preview do arquivo -->
+                        <div class="file-preview" id="filePreview"></div>
+                    </div>
+                </div>
+
+                <!-- Área de seleção de produtos com checkboxes -->
+                <div id="area-produtos" class="card mt-4 d-none">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h5>Produtos</h5>
+                                <div id="lista-produtos" class="border p-2" style="height: 250px; overflow-y: auto;">
+                                    <!-- Checkboxes serão adicionados via JS -->
+                                </div>
+                            </div>
+
+                            <!-- COLUNA DE CONTROLES -->
+                            <div class="col-md-2 control-buttons">
+                                <!-- Botões em massa -->
+                                <div class="bulk-buttons">
+                                    <button type="button" id="btn-add-all" class="btn btn-success btn-sm" title="Adicionar todos os produtos">
+                                        <i class="fas fa-angle-double-right"></i> Todos
+                                    </button>
+                                    <button type="button" id="btn-remove-all" class="btn btn-warning btn-sm" title="Remover todos os produtos">
+                                        <i class="fas fa-angle-double-left"></i> Todos
+                                    </button>
+                                </div>
+
+                                <!-- Separador visual -->
+                                <div class="separator"></div>
+
+                                <!-- Botões individuais -->
+                                <div class="individual-buttons">
+                                    <button type="button" id="btn-add" class="btn btn-primary" title="Adicionar selecionados">
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <button type="button" id="btn-remove" class="btn btn-secondary" title="Remover selecionados">
+                                        <i class="fas fa-angle-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <h5>Selecionados</h5>
+                                <div id="lista-selecionados" class="border p-2" style="height: 250px; overflow-y: auto;">
+                                    <!-- Checkboxes selecionados aparecerão aqui -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Informações úteis -->
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Use os botões individuais para mover itens selecionados ou os botões "Todos" para mover todos de uma vez.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo hidden para enviar produtos selecionados -->
+                <input type="hidden" th:field="*{produtosSelecionados}" id="produtosSelecionados">
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                    <a th:href="@{/conteudos}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span th:text="${isEdit ? 'Atualizar' : 'Salvar'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+
+<script>
+    const tipoConteudo = document.getElementById('tipoConteudo');
+    const categoria = document.getElementById('categoria');
+    const areaProdutos = document.getElementById('area-produtos');
+    const uploadMidia = document.getElementById('upload-midia');
+    const produtosSelecionadosHidden = document.getElementById('produtosSelecionados');
+
+    <!-- Elementos do upload -->
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const filePreview = document.getElementById('filePreview');
+    const nomeArquivoHidden = document.getElementById('nomeArquivoHidden');
+    const uploadProgress = document.querySelector('.upload-progress');
+    const progressBar = document.querySelector('.progress-bar');
+    const btnRemoverArquivo = document.getElementById('btnRemoverArquivo');
+
+    // Obter CSRF token para as requisições AJAX
+    const csrfToken = $('meta[name="_csrf"]').attr('content');
+    const csrfHeader = $('meta[name="_csrf_header"]').attr('content');
+
+    // Verificar se há arquivo existente (modo edição)
+    function verificarArquivoExistente() {
+        const nomeArquivo = nomeArquivoHidden.value;
+        console.log('Verificando arquivo existente:', nomeArquivo);
+
+        if (nomeArquivo && nomeArquivo.trim() !== '') {
+            console.log('Arquivo existente encontrado:', nomeArquivo);
+
+            // Mostrar informações do arquivo existente
+            fileName.textContent = 'Arquivo atual: ' + nomeArquivo;
+            fileInfo.style.display = 'block';
+            btnRemoverArquivo.style.display = 'inline-block';
+
+            // Tentar mostrar preview do arquivo existente
+            mostrarPreviewExistente(nomeArquivo);
+        } else {
+            console.log('Nenhum arquivo existente encontrado');
+        }
+    }
+
+    // Função para mostrar preview de arquivo existente
+    function mostrarPreviewExistente(nomeArquivo) {
+        const urlArquivo = 'http://localhost:8081/api-tv/img/uploads/' + nomeArquivo;
+
+        // Determinar tipo do arquivo pela extensão
+        const extensao = nomeArquivo.toLowerCase().split('.').pop();
+        const tiposImagem = ['jpg', 'jpeg', 'png', 'gif'];
+        const tiposVideo = ['mp4', 'mov', 'avi'];
+
+        filePreview.innerHTML = '';
+
+        if (tiposImagem.includes(extensao)) {
+            const img = document.createElement('img');
+            img.src = urlArquivo;
+            img.className = 'preview-image';
+            img.alt = 'Preview da imagem';
+            img.onload = function() {
+                console.log('✅ Preview da imagem carregado com sucesso');
+            };
+            img.onerror = function() {
+                console.error('❌ Erro ao carregar preview da imagem:', urlArquivo);
+                // Mostrar placeholder para imagem
+                mostrarPlaceholder('imagem', nomeArquivo);
+            };
+            filePreview.appendChild(img);
+
+        } else if (tiposVideo.includes(extensao)) {
+            const video = document.createElement('video');
+            video.src = urlArquivo;
+            video.className = 'preview-video';
+            video.controls = true;
+            video.onloadedmetadata = function() {
+                console.log('✅ Preview do vídeo carregado com sucesso');
+            };
+            video.onerror = function() {
+                console.error('❌ Erro ao carregar preview do vídeo:', urlArquivo);
+                // Mostrar placeholder para vídeo
+                mostrarPlaceholder('video', nomeArquivo);
+            };
+            filePreview.appendChild(video);
+
+        } else {
+            // Arquivo de tipo desconhecido, mostrar placeholder genérico
+            console.log('📄 Tipo de arquivo desconhecido, mostrando placeholder');
+            mostrarPlaceholder('arquivo', nomeArquivo);
+        }
+    }
+
+    // Função para mostrar placeholder quando não conseguir carregar preview
+    function mostrarPlaceholder(tipo, nomeArquivo) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'preview-placeholder';
+        placeholder.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 200px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #6c757d;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        `;
+
+        let icone, texto;
+        switch(tipo) {
+            case 'imagem':
+                icone = 'fas fa-image fa-3x';
+                texto = 'Imagem carregada';
+                break;
+            case 'video':
+                icone = 'fas fa-video fa-3x';
+                texto = 'Vídeo carregado';
+                break;
+            default:
+                icone = 'fas fa-file fa-3x';
+                texto = 'Arquivo carregado';
+        }
+
+        placeholder.innerHTML = `
+            <i class="${icone}" style="margin-bottom: 10px;"></i>
+            <div style="font-weight: bold; margin-bottom: 5px;">${texto}</div>
+            <div style="font-size: 12px; word-break: break-all;">${nomeArquivo}</div>
+        `;
+
+        filePreview.innerHTML = '';
+        filePreview.appendChild(placeholder);
+    }
+
+    // Função para fazer upload do arquivo via AJAX
+    function uploadArquivo(file) {
+        const formData = new FormData();
+        formData.append('arquivo', file);
+
+        // Mostrar barra de progresso
+        uploadProgress.style.display = 'block';
+        fileInfo.style.display = 'none';
+
+        // Fazer upload via AJAX
+        $.ajax({
+            url: '/api-mercado/upload', // URL completa com context path
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function(xhr) {
+                // Adicionar CSRF token se disponível
+                if (csrfToken) {
+                    xhr.setRequestHeader(csrfHeader, csrfToken);
+                }
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = (evt.loaded / evt.total) * 100;
+                        progressBar.style.width = percentComplete + '%';
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                console.log('Resposta do upload:', response);
+
+                // Esconder barra de progresso
+                uploadProgress.style.display = 'none';
+
+                if (response.sucesso) {
+                    // Atualizar campo hidden com o nome do arquivo retornado pela API-TV
+                    nomeArquivoHidden.value = response.nomeArquivo;
+
+                    // Mostrar informações do arquivo
+                    fileName.textContent = response.nomeOriginal + ' → ' + response.nomeArquivo;
+                    fileInfo.style.display = 'block';
+                    btnRemoverArquivo.style.display = 'inline-block';
+
+                    // Mostrar preview usando URL da API-TV
+                    mostrarPreview(file, response.urlArquivo);
+
+                    console.log('Upload realizado com sucesso:', response.nomeArquivo);
+                    console.log('URL do arquivo:', response.urlArquivo);
+                } else {
+                    alert('Erro no upload: ' + (response.erro || 'Erro desconhecido'));
+                }
+            },
+            error: function(xhr, status, error) {
+                uploadProgress.style.display = 'none';
+                console.error('Erro no upload:', error);
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseText);
+
+                if (xhr.status === 403) {
+                    alert('Erro de autenticação. Recarregue a página e tente novamente.');
+                } else {
+                    alert('Erro ao fazer upload do arquivo: ' + error);
+                }
+            }
+        });
+    }
+
+    // Função para mostrar preview do arquivo
+    function mostrarPreview(file, url) {
+        filePreview.innerHTML = '';
+
+        if (file && file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = url || URL.createObjectURL(file);
+            img.className = 'preview-image';
+            img.alt = 'Preview da imagem';
+            img.onload = function() {
+                console.log('Preview da imagem carregado');
+            };
+            img.onerror = function() {
+                console.error('Erro ao carregar preview da imagem');
+                // Fallback para blob URL se a URL da API-TV falhar
+                if (url && file) {
+                    img.src = URL.createObjectURL(file);
+                }
+            };
+            filePreview.appendChild(img);
+
+        } else if (file && file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.src = url || URL.createObjectURL(file);
+            video.className = 'preview-video';
+            video.controls = true;
+            video.onloadedmetadata = function() {
+                console.log('Preview do vídeo carregado');
+            };
+            video.onerror = function() {
+                console.error('Erro ao carregar preview do vídeo');
+                // Fallback para blob URL se a URL da API-TV falhar
+                if (url && file) {
+                    video.src = URL.createObjectURL(file);
+                }
+            };
+            filePreview.appendChild(video);
+        }
+    }
+
+    // Event listeners para upload
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (validarArquivo(file)) {
+                uploadArquivo(file);
+            }
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && validarArquivo(file)) {
+            uploadArquivo(file);
+        }
+    });
+
+    // Event listener para remover arquivo
+    btnRemoverArquivo.addEventListener('click', () => {
+        if (confirm('Tem certeza que deseja remover este arquivo?')) {
+            // Limpar campos e preview
+            $.ajax({
+                url: '/api-mercado/upload/'+ nomeArquivoHidden.value,
+                method:  'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute("content")
+                },
+
+            }).done(() => {
+                nomeArquivoHidden.value = '';
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                filePreview.innerHTML = '';
+                btnRemoverArquivo.style.display = 'none';
+                console.log('Arquivo removido do formulário');
+            })
+
+        }
+    });
+
+    // Função para validar arquivo
+    function validarArquivo(file) {
+        const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+            'video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
+
+        if (!tiposPermitidos.includes(file.type)) {
+            alert('Tipo de arquivo não permitido. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI).');
+            return false;
+        }
+
+        // Limitar tamanho (ex: 50MB)
+        const tamanhoMaximo = 50 * 1024 * 1024; // 50MB
+        if (file.size > tamanhoMaximo) {
+            alert('Arquivo muito grande. Tamanho máximo permitido: 50MB.');
+            return false;
+        }
+
+        return true;
+    }
+
+    function checarExibirArea() {
+        const tipo = tipoConteudo.value;
+        const cat = document.getElementById('categoria');
+
+        // Mostrar área de produtos apenas para tipo 3
+        if (tipo === '3' && cat && cat.value != '') {
+            areaProdutos.classList.remove('d-none');
+            carregarProdutos(cat.value);
+        } else {
+            areaProdutos.classList.add('d-none');
+            document.getElementById('lista-produtos').innerHTML = '';
+            document.getElementById('lista-selecionados').innerHTML = '';
+        }
+
+        // Mostrar upload de mídia para tipo 1 ou 2
+        if (tipo === '1' || tipo === '2') {
+            uploadMidia.classList.remove('d-none');
+            // Verificar arquivo existente quando mostrar área de upload
+            setTimeout(() => verificarArquivoExistente(), 100);
+        } else {
+            uploadMidia.classList.add('d-none');
+            // Limpar upload quando esconder
+            nomeArquivoHidden.value = '';
+            fileInfo.style.display = 'none';
+            filePreview.innerHTML = '';
+            fileInput.value = '';
+            btnRemoverArquivo.style.display = 'none';
+        }
+    }
+
+    function checarDepartamento() {
+        if (produtosSelecionadosHidden.value && produtosSelecionadosHidden.value.trim() !== '') {
+            categoria.disabled = true;
+        } else {
+            categoria.disabled = false;
+        }
+    }
+
+    function atualizarProdutosSelecionados() {
+        const selecionados = document.getElementById('lista-selecionados');
+        const ids = Array.from(selecionados.querySelectorAll('input[type=checkbox]'))
+            .map(input => input.value);
+        produtosSelecionadosHidden.value = ids.join(',');
+        checarDepartamento();
+        // Atualizar estado dos botões
+        atualizarEstadoBotoes();
+    }
+    // Atualizar estado dos botões baseado no conteúdo das listas
+    function atualizarEstadoBotoes() {
+        const listaProdutos = document.getElementById('lista-produtos');
+        const listaSelecionados = document.getElementById('lista-selecionados');
+
+        const btnAddAll = document.getElementById('btn-add-all');
+        const btnRemoveAll = document.getElementById('btn-remove-all');
+        const btnAdd = document.getElementById('btn-add');
+        const btnRemove = document.getElementById('btn-remove');
+
+        // Verificar se há produtos disponíveis
+        const temProdutosDisponiveis = listaProdutos.children.length > 0;
+        const temProdutosSelecionados = listaSelecionados.children.length > 0;
+
+        // Verificar se há itens marcados
+        const temProdutosMarcadosDisponiveis = listaProdutos.querySelectorAll('input[type=checkbox]:checked').length > 0;
+        const temProdutosMarcadosSelecionados = listaSelecionados.querySelectorAll('input[type=checkbox]:checked').length > 0;
+
+        // Habilitar/desabilitar botões
+        btnAddAll.disabled = !temProdutosDisponiveis;
+        btnRemoveAll.disabled = !temProdutosSelecionados;
+        btnAdd.disabled = !temProdutosMarcadosDisponiveis;
+        btnRemove.disabled = !temProdutosMarcadosSelecionados;
+
+        // Atualizar tooltips dos botões
+        btnAddAll.title = temProdutosDisponiveis ?
+            `Adicionar todos os ${listaProdutos.children.length} produtos` :
+            'Nenhum produto disponível';
+
+        btnRemoveAll.title = temProdutosSelecionados ?
+            `Remover todos os ${listaSelecionados.children.length} produtos selecionados` :
+            'Nenhum produto selecionado';
+    }
+
+    // Carrega produtos via Ajax
+    function carregarProdutos(catId) {
+        const jaSelecionados = (produtosSelecionadosHidden.value || '')
+            .split(',')
+            .filter(v => v.trim() !== '');
+
+        $.ajax({
+            url: `/api-mercado/api/export/porCategoriaConteudo/${catId}`,
+            method: 'GET',
+            cache: false,
+            dataType: 'json',
+            beforeSend: function(xhr) {
+                // Adicionar CSRF token se disponível
+                if (csrfToken) {
+                    xhr.setRequestHeader(csrfHeader, csrfToken);
+                }
+                // Adicionar headers adicionais
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+            },
+            timeout: 30000 // 30 segundos de timeout
+        })
+        .done(function (data) {
+
+            try {
+                // 🔧 PROTEÇÃO CONTRA REFERÊNCIA CIRCULAR
+                let produtos = [];
+
+                if (data && data.produtos && Array.isArray(data.produtos)) {
+                    // Limpar referências circulares dos produtos
+                    produtos = data.produtos.map(produto => ({
+                        id: produto.id,
+                        cdTxtimport: produto.cdTxtimport,
+                        nome: produto.nome,
+                        preco: produto.preco || 0,
+                        precoPromocao: produto.precoPromocao || 0,
+                        descricao: produto.descricao || '',
+                        // Categoria simplificada (sem terminals)
+                        categoria: produto.categoria ? {
+                            id: produto.categoria.id,
+                            nome: produto.categoria.nome,
+                            nomeExibicao: produto.categoria.nomeExibicao
+                        } : null
+                    }));
+                }
+
+                const lista = document.getElementById('lista-produtos');
+                const listaSel = document.getElementById('lista-selecionados');
+                lista.innerHTML = '';
+                // Se já existem selecionados (modo edição), monta do lado direito
+                if (jaSelecionados.length > 0 && listaSel.children.length === 0) {
+                    jaSelecionados.forEach(id => {
+                        const produto = data.produtos.find(p => p.id == id);
+                        if (produto) {
+                            const div = criarCheckboxProduto(produto);
+                            listaSel.appendChild(div);
+                        }
+                    });
+                }
+
+                // Monta a lista da esquerda sem os já selecionados
+                if (data.produtos && Array.isArray(data.produtos)) {
+                    data.produtos.forEach(produto => {
+                        if (!jaSelecionados.includes(produto.id.toString())) {
+                            const div = criarCheckboxProduto(produto);
+                            lista.appendChild(div);
+                        }
+                    });
+                }
+
+                // Atualizar estado dos botões após carregar
+                atualizarEstadoBotoes();
+
+            } catch (error) {
+
+                console.error('Erro detalhado:', error);
+                alert('Erro ao processar dados dos produtos. Verifique o console para detalhes.');
+            }        })
+        .fail(function(xhr, status, error) {
+                const errorMsg = `❌ AJAX FAIL! Status: ${xhr.status}, Error: ${error}, ResponseText: ${xhr.responseText}`;
+
+                console.error('Detalhes do erro AJAX:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+
+                // Mostrar mensagem de erro mais amigável
+                alert(`Erro ao carregar produtos:\nStatus: ${xhr.status}\nErro: ${error || 'Erro desconhecido'}`);
+            })
+        .always(function() {
+
+            });
+    }
+
+    function criarCheckboxProduto(produto) {
+        const div = document.createElement('div');
+        div.classList.add('form-check');
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.classList.add('form-check-input');
+        input.value = produto.id;
+        input.id = 'produto-' + produto.id;
+
+        // Adicionar event listener para atualizar botões quando marcar/desmarcar
+        input.addEventListener('change', atualizarEstadoBotoes);
+
+        const label = document.createElement('label');
+        label.classList.add('form-check-label');
+        label.htmlFor = input.id;
+        label.textContent = formatarLinha(produto.cdTxtimport, produto.nome, produto.preco);
+        div.appendChild(input);
+        div.appendChild(label);
+        return div;
+    }
+    function formatarLinha(codigo, nome, preco) {
+        const codigoFormatado = String(codigo).padStart(5, '0');
+        let nomeFormatado = String(nome || '').substring(0, 50);
+        nomeFormatado = nomeFormatado.padEnd(50, ' ');
+
+        const precoFormatado = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(Number(preco) || 0);
+
+        // Alinha à direita com largura especificada
+        const precoAlinhado = precoFormatado.padStart(15, ' ');
+
+        return `${codigoFormatado} - ${nomeFormatado}->${precoAlinhado}`;
+    }
+
+    tipoConteudo.addEventListener('change', () => {
+        checarExibirArea();
+        checarDepartamento();
+    });
+    categoria.addEventListener('change', checarExibirArea);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('=== DOM CONTENT LOADED ===');
+        console.log('Campo nomeMidia valor:', nomeArquivoHidden.value);
+        console.log('É modo edição:', nomeArquivoHidden.value && nomeArquivoHidden.value.trim() !== '');
+
+        checarExibirArea();
+        checarDepartamento();
+
+        // Verificar se há arquivo existente (modo edição)
+        verificarArquivoExistente();
+
+        // Forçar exibir área de produtos no modo edição
+        if (produtosSelecionadosHidden.value && produtosSelecionadosHidden.value.trim() !== '') {
+            areaProdutos.classList.remove('d-none');
+        }
+    });
+
+    // Mover itens entre listas
+    document.getElementById('btn-add').addEventListener('click', () => {
+        moverItens('lista-produtos', 'lista-selecionados');
+    });
+    document.getElementById('btn-remove').addEventListener('click', () => {
+        moverItens('lista-selecionados', 'lista-produtos');
+    });
+
+    // Adicionar todos e Remover todos
+    document.getElementById('btn-add-all').addEventListener('click', () => {
+        moverTodosItens('lista-produtos', 'lista-selecionados');
+    });
+
+    document.getElementById('btn-remove-all').addEventListener('click', () => {
+        moverTodosItens('lista-selecionados', 'lista-produtos');
+    });
+
+    function moverItens(origemId, destinoId) {
+        const origem = document.getElementById(origemId);
+        const destino = document.getElementById(destinoId);
+
+        Array.from(origem.querySelectorAll('input[type=checkbox]:checked')).forEach(input => {
+            const div = input.parentElement;
+            input.checked = false;
+            destino.appendChild(div);
+        });
+
+        atualizarProdutosSelecionados();
+    }
+    function moverTodosItens(origemId, destinoId) {
+        const origem = document.getElementById(origemId);
+        const destino = document.getElementById(destinoId);
+
+        // Confirmar ação se houver muitos itens
+        const totalItens = origem.children.length;
+        if (totalItens > 10) {
+            const nomeOrigem = origemId === 'lista-produtos' ? 'disponíveis' : 'selecionados';
+            const nomeDestino = origemId === 'lista-produtos' ? 'selecionados' : 'disponíveis';
+
+            if (!confirm(`Tem certeza que deseja mover todos os ${totalItens} produtos ${nomeOrigem} para ${nomeDestino}?`)) {
+                return;
+            }
+        }
+
+        // Mover todos os itens
+        Array.from(origem.children).forEach(div => {
+            const input = div.querySelector('input[type=checkbox]');
+            if (input) {
+                input.checked = false; // Desmarcar checkbox
+            }
+            destino.appendChild(div);
+        });
+
+        // Atualizar produtos selecionados e estado dos botões
+        atualizarProdutosSelecionados();
+
+        // Feedback visual
+        const action = origemId === 'lista-produtos' ? 'adicionados' : 'removidos';
+        console.log(`${totalItens} produtos ${action} com sucesso!`);
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        atualizarProdutosSelecionados();
+    });
+</script>
+
+</body>
+</html>

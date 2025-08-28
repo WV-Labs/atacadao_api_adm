@@ -495,6 +495,7 @@ public class ProdutoService {
           response.put(TRANSACAO, "COMMIT");
           response.put(PRODUTO, criarRespostaProduto(new Produto()));
         }
+        limparCache();
         return response;
       } catch (IllegalArgumentException e) {
         // ❌ ROLLBACK AUTOMÁTICO - Erro de validação

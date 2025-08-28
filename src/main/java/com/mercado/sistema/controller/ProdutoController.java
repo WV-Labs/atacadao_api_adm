@@ -33,6 +33,7 @@ public class ProdutoController {
 
   @GetMapping
   public String list(Model model) {
+    produtoService.limparCache();
     model.addAttribute("produtos", produtoService.listarTodos());
     return PRODUTO_LIST;
   }
