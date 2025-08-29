@@ -180,6 +180,7 @@
                             <label for="tipoConteudo" class="form-label">Tipo Conteudo *</label>
                             <select class="form-control" th:field="*{tipoConteudo}" id="tipoConteudo">
                                 <option value="3" selected="selected">Tabela de Produtos</option>
+                                <option value="4">Oferta</option>
                                 <option value="2">Video</option>
                                 <option value="1">Foto</option>
                             </select>
@@ -647,8 +648,8 @@
         const tipo = tipoConteudo.value;
         const cat = document.getElementById('categoria');
 
-        // Mostrar área de produtos apenas para tipo 3
-        if (tipo === '3' && cat && cat.value != '') {
+        // Mostrar área de produtos apenas para tipo 3 or 4
+        if ( (tipo === '3' || tipo === '4') && cat && cat.value != '') {
             areaProdutos.classList.remove('d-none');
             carregarProdutos(cat.value);
         } else {
