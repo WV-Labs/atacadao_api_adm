@@ -46,3 +46,4 @@ build/
 /local-repo/
 /logs/
 !/target/
+!/logs/db-updates.log

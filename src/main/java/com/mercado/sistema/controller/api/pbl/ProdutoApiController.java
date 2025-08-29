@@ -66,6 +66,12 @@ public class ProdutoApiController {
     return ResponseEntity.ok(produtoService.obterListaProdutoRemotoEspecifico(categoria, numero));
   }
 
+  @GetMapping(value = "/produtos-json-remoto-oferta/{conteudo}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PermitAll
+  public ResponseEntity<List<ProdutoRemote>> getProdutosComoJson(@PathVariable Long conteudo) {
+    return ResponseEntity.ok(produtoService.obterListaProdutoOferta(conteudo));
+  }
+
   /** Endpoint para salvar ou atualizar produto POST /api/import-txt */
   @PostMapping("/import-txt")
   @PermitAll

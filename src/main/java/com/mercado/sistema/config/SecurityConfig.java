@@ -67,6 +67,7 @@ public class SecurityConfig {
                                     .requestMatchers(HttpMethod.POST, "/api/export/import-txt/**").permitAll()
                                     .requestMatchers(HttpMethod.GET, "/api/export/produtos-json").permitAll()
                                     .requestMatchers(HttpMethod.GET, "/api/export/produtos-json-remoto/**").permitAll()
+                                    .requestMatchers(HttpMethod.GET, "/api/export/produtos-json-remoto-oferta/**").permitAll()
 
                                     // 3) endpoints de upload - permitir para usuários autenticados
                                     .requestMatchers(HttpMethod.POST, "/api-tv/upload").permitAll()

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Terminais - Login</title>
+    <link rel="stylesheet" th:href="@{/css/style_login.css}">
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="icon" th:href="@{/favicon.ico?v=1}" type="image/x-icon" />
+</head>
+<body class="login-bg">
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-lg-4">
+            <div class="login-card mt-5">
+                <div class="login-header card-header text-center"><h4>WayVision - Midia</h4></div>
+                <div class="card-body">
+                    <div th:if="${error}" class="login-alert login-alert-danger" role="alert"><span th:text="${error}"></span></div>
+                    <div th:if="${message}" class="login-alert login-alert-success" role="alert"><span th:text="${message}"></span>
+                    </div>
+                    <form th:action="@{/login}" method="post">
+                        <div class="mb-3"><label for="username" class="login-label form-label">Usuário</label>
+                            <input type="text"
+                                                                                                          class="login-input form-control"
+                                                                                                          id="username"
+                                                                                                          name="username"
+                                                                                                          required>
+                        </div>
+                        <div class="mb-3"><label for="password" class="login-label form-label">Senha</label>
+                            <input type="password"
+                                                                                                        class="login-input form-control"
+                                                                                                        id="password"
+                                                                                                        name="password"
+                                                                                                        required></div>
+                        <div class="d-grid">
+                            <button type="submit" class="login-btn btn btn-primary">Entrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

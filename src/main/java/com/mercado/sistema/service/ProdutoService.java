@@ -1,5 +1,6 @@
 package com.mercado.sistema.service;
 
+import static com.mercado.sistema.general.Constants.TCOFERTA;
 import static com.mercado.sistema.general.Constants.TCTABELAPRECO;
 import static java.lang.Long.parseLong;
 
@@ -56,10 +57,13 @@ public class ProdutoService {
                           "PAO FAT.HUNGARA", "PAO DOCE CARTEIRA", "PAO DOCE", "PAO DE MILHO", "PAO BRIOCHE", "NESCAFE TRAD."));
   @Autowired private FileMonitorConfig config;
   @Autowired private ProdutoRepository produtoRepository;
+  @Autowired private ConteudoTabelaPrecosService conteudoTabelaPrecos;;
   @Autowired private CategoriaService categoriaService;
   @Autowired private TerminalService terminalService;
   @Autowired private VisualizacaoService visualizacaoService;
   @Autowired private ConteudoService conteudoService;
+  @Autowired
+  private ConteudoTabelaPrecosService conteudoTabelaPrecosService;
 
   public ProdutoService(ProdutoRepository produtoRepository) {
     this.produtoRepository = produtoRepository;
@@ -185,38 +189,26 @@ public class ProdutoService {
   }
 
   public List<Produto> obterListaProduto(String categoria, Integer numero) {
-    List<Produto> produtos;
+
     Optional<Terminal> terminal = terminalService.findByCategoriaNomeAndNumero(categoria, numero);
-    if(terminal.isPresent()) {
-      /*if(terminal.get().getTipoConteudo()==TCTABELAPRECO) {
-        produtos = conteudoService.findProdutos(terminal.get().getId());
-        if(produtos.isEmpty()) {
-          produtos = getProdutos(categoria);
-        }
-        return produtos;
-      }*/
-    } else{
+    if(!terminal.isPresent()) {
       return getProdutos(categoria);
     }
     return Collections.emptyList();
   }
 
+  public List<ProdutoRemote> obterListaProdutoOferta(Long conteudoId) {
+    List<ProdutoRemote> produtoRemotes = ProdutoRemote
+            .fromProdutoList(conteudoTabelaPrecosService.findProdutosConteudo(conteudoId), true);
+    produtoRemotes.stream().forEach(produto -> produto.setTipoConteudo(TCOFERTA));
+    return produtoRemotes;
+  }
+
   public List<ProdutoRemote> obterListaProdutoRemotoEspecifico(String categoria, Integer numero) {
     Optional<Terminal> termFind = terminalService.findByCategoriaNomeAndNumero(categoria, numero);
-    if(termFind.isPresent()) {
-      /*if (termFind.get().getTipoConteudo() != TCTABELAPRECO) {
-        return Arrays.asList(builderProdutoRemoteVazio(termFind.get()));
-      }*/
-    }
-    // quando NÃO existe terminal → usa só a categoria com conteudo=false
+
     return termFind
             .map(terminal -> {
-/*
-              // quando existe terminal, mas não é TCTABELAPRECO → lista vazia
-              if (terminal..getTipoConteudo() != TCTABELAPRECO) {
-                return Arrays.asList(builderProdutoRemoteVazio(terminal));
-              }
-*/
 
               // produtos vinculados ao terminal (conteudo = true por padrão no seu DTO)
               var doTerminal = ProdutoRemote.fromProdutoList(
@@ -495,6 +487,7 @@ public class ProdutoService {
           response.put(TRANSACAO, "COMMIT");
           response.put(PRODUTO, criarRespostaProduto(new Produto()));
         }
+        limparCache();
         return response;
       } catch (IllegalArgumentException e) {
         // ❌ ROLLBACK AUTOMÁTICO - Erro de validação

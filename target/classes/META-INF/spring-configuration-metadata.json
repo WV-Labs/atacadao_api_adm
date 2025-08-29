@@ -1,0 +1,42 @@
+{
+  "groups": [
+    {
+      "name": "file.monitor",
+      "type": "com.mercado.sistema.config.FileMonitorConfig",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "file.monitor.file-pattern",
+      "type": "java.lang.String",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig",
+      "defaultValue": "produtos_*.json"
+    },
+    {
+      "name": "file.monitor.input-directory",
+      "type": "java.lang.String",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig"
+    },
+    {
+      "name": "file.monitor.output-directory",
+      "type": "java.lang.String",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig"
+    },
+    {
+      "name": "file.monitor.path",
+      "type": "java.lang.String",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig"
+    },
+    {
+      "name": "file.monitor.polling-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.mercado.sistema.config.FileMonitorConfig",
+      "defaultValue": 5000
+    }
+  ],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}
